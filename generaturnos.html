@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Administración Asistentes</title>
+        <style>      
+        body { margin: 0; padding-bottom: 3rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+            form { background: rgba(0, 0, 0, 0.15); padding: 0.25rem; position: fixed; bottom: 0; left: 0; right: 0; display: flex;flex-direction: column; justify-content: center;align-items: stretch; box-sizing: border-box; backdrop-filter: blur(10px); }      
+            input { border: none; padding: 1rem;  border-radius: 2rem; margin: 1%; }      
+            input:focus { outline: none; }      
+            form > button { background: #333; border: none; padding:1rem; margin: 0.25rem; border-radius: 3px; outline: none; color: #fff; }
+            #messages { list-style-type: none; margin: 0; padding: 0; }      
+            #messages > li { padding: 0.5rem 1rem; }      
+            #messages > li:nth-child(odd) { background: #efefef; }    
+            .full{
+                width: 80%;
+            }
+            .middle{
+                width: 25%;
+            }
+            .styled-table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.9em;
+    font-family: sans-serif;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+.styled-table thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+}
+.styled-table th,
+.styled-table td {
+    padding: 12px 15px;
+}
+.styled-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.styled-table tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+.styled-table tbody tr:last-of-type {
+    border-bottom: 2px solid #009879;
+}
+
+.styled-table tbody tr.active-row {
+    font-weight: bold;
+    color: #009879;
+}
+
+
+        </style>
+    </head>
+    <body id="chat">
+       
+
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Turno</th>
+                    <th>Paciente</th>
+                    <th>Peso</th>
+                    <th>Talla</th>
+                    <th>Presion</th>
+                    <th>Temperatura</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-repeat="paciente in pacientes"  v-show="pacientes.length"> 
+                    <td>{{$index + 1}} </td>
+                    <td>{{paciente.turno}}</td>
+                    <td>{{paciente.nombre}}</td>
+                    <td>{{paciente.peso}}</td>
+                    <td>{{paciente.talla}}</td>
+                    <td>{{paciente.presion}}</td>
+                    <td>{{paciente.temperatura}}</td>
+                    <td>{{paciente.estado}}</td>
+                    <td><button v-show="paciente.estado == 'En espera'">Cancelar Turno</button></td>
+                </tr>
+                <tr v-show="!pacientes.length">
+                    <td colspan="9">
+                        Ningun paciente por el momento
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <form v-on="submit: send">
+            <input id="nombre" v-model="nombre" placeholder="Nombre del paciente" class="full">
+            <input id="peso" v-model="peso" placeholder="Peso" class="middle">
+            <input id="talla" v-model="talla" placeholder="Estatura" class="middle">
+            <input id="presion" v-model="presion" placeholder="Presion" class="middle"> 
+            <input id="temperatura" v-model="temperatura" placeholder="Temperatura" class="middle">
+            <button>Generar Turno</button>
+        </form>
+       
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/0.12.15/vue.min.js"></script>
+        <script type="text/javascript">
+            var socket = io();
+            new Vue ({
+                el:'#chat',
+                data:{
+                    pacientes : [],
+                    paciente : '',
+                    nombre:'',
+                    peso : '',
+                    talla : '',
+                    presion : '',
+                    temperatura:'',
+                    turno:'',
+
+                },
+                ready: function(){
+                    socket.on('chat.paciente', function(paciente){
+                        this.pacientes.push(paciente);
+                        
+                    }.bind(this));
+                    socket.on('update.pacientes', function(pacientes){
+                        this.pacientes = pacientes;
+                    }.bind(this));
+                },
+                methods:{
+                    send: function(e){
+                    
+                        socket.emit('chat.paciente',{
+                            nombre:this.nombre,
+                            peso:this.peso,
+                            talla:this.talla,
+                            presion:this.presion,
+                            temperatura:this.temperatura,
+                            turno:this.generarTurno(3),
+                            estado:"En espera",
+                        });
+                        this.nombre = '';
+                        this.peso = '';
+                        this.talla = '';
+                        this.presion = '';
+                        this.temperatura = '';
+                        
+                        e.preventDefault();
+                    },
+                    generarTurno: function(length) {
+                            var result           = '';
+                            var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                            var charactersLength = characters.length;
+                            for ( var i = 0; i < length; i++ ) {
+                             result += characters.charAt(Math.floor(Math.random() *  charactersLength));
+                            }
+                            return result;
+                    }
+                }
+            });
+        </script>
+    </body>
+</html> 

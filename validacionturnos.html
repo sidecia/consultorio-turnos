@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Administracion Medico</title>
+        <style>      body { margin: 0; padding-bottom: 3rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+            #messages { list-style-type: none; margin: 0; padding: 0; }      
+            #messages > li { padding: 0.5rem 1rem; }      
+            #messages > li:nth-child(odd) { background: #efefef; }    
+            .styled-table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.9em;
+    font-family: sans-serif;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+.styled-table thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+}
+.styled-table th,
+.styled-table td {
+    padding: 12px 15px;
+}
+.styled-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.styled-table tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+.styled-table tbody tr:last-of-type {
+    border-bottom: 2px solid #009879;
+}
+
+.styled-table tbody tr.active-row {
+    font-weight: bold;
+    color: #009879;
+}
+
+        </style>
+    </head>
+    <body id="chat">
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Turno</th>
+                    <th>Paciente</th>
+                    <th>Peso</th>
+                    <th>Talla</th>
+                    <th>Presion</th>
+                    <th>Temperatura</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-repeat="paciente in pacientes"  v-show="pacientes.length"> 
+                    <td>{{$index + 1}} </td>
+                    <td>{{paciente.turno}}</td>
+                    <td>{{paciente.nombre}}</td>
+                    <td>{{paciente.peso}}</td>
+                    <td>{{paciente.talla}}</td>
+                    <td>{{paciente.presion}}</td>
+                    <td>{{paciente.temperatura}}</td>
+                    <td>{{paciente.estado}}</td>
+                    <td> 
+                        <button v-on="click: turnoVigente(paciente)" v-show="paciente.estado == 'En espera'">Atender Turno</button> 
+                        <button v-on="click: turnoFinalizado(paciente)" v-show="paciente.estado == 'Vigente'">Concluido</button>
+                    </td>
+                </tr>
+                <tr v-show="!pacientes.length">
+                    <td colspan="9">
+                        Ningun paciente por el momento
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/0.12.15/vue.min.js"></script>
+        <script type="text/javascript">
+            var socket = io();
+            
+            new Vue ({
+                el:'#chat',
+                data:{
+                    pacientes : [],
+                    pacientesUpdate : [],
+                    paciente : ''
+                },
+                ready: function(){
+                    socket.on('chat.paciente', function(paciente){
+                        this.pacientes.push(paciente);
+                    }.bind(this));
+                    socket.on('update.pacientes', function(pacientes){
+                        this.pacientes = pacientes;
+                    }.bind(this));
+                },
+                methods:{
+                    turnoVigente: function(paciente) {
+                        
+                        for (let index = 0; index < this.pacientes.length; ++index) {
+                            if(paciente.turno == this.pacientes[index].turno){
+                                this.pacientes[index].estado = 'Vigente'
+                            }
+                            this.pacientesUpdate = this.pacientes
+                            socket.emit('update.pacientes',this.pacientesUpdate);
+                        }
+                       
+                    },
+                    turnoFinalizado:function(paciente) {
+                        
+                        for (let index = 0; index < this.pacientes.length; ++index) {
+                            if(paciente.turno == this.pacientes[index].turno){
+                                this.pacientes[index].estado = 'Concluido'
+                            }
+                            this.pacientesUpdate = this.pacientes
+                            socket.emit('update.pacientes',this.pacientesUpdate);
+                        }
+                       
+                    },
+                }
+            });
+            
+        </script>
+    </body>
+</html> 

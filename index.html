@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Pacientes</title>
+       
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+        <style>      body { margin: 0; padding-bottom: 3rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+            form { background: rgba(0, 0, 0, 0.15); padding: 0.25rem; position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 3rem; box-sizing: border-box; backdrop-filter: blur(10px); }      
+            input { border: none; padding: 0 1rem; flex-grow: 1; border-radius: 2rem; margin: 0.25rem; }      
+            input:focus { outline: none; }      
+            form > button { background: #333; border: none; padding: 0 1rem; margin: 0.25rem; border-radius: 3px; outline: none; color: #fff; }
+            #messages { list-style-type: none; margin: 0; padding: 0; }      
+            #messages > li { padding: 0.5rem 1rem; }      
+            #messages > li:nth-child(odd) { background: #efefef; }   
+            .hide{ display: none;}
+            .last{display: inline-block;}
+            .turno{
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 80px;
+                text-transform: uppercase;
+            }
+            .content_turno{
+                width: 100%;
+                height: 100%;
+                position: relative;
+            }
+        </style>
+        
+    </head>
+    <body id="chat">
+        <ul id="messages" v-show="pacientes.length" class="content_turno">
+            <li class="turno" v-repeat="paciente in pacientes" v-show="paciente.estado == 'Vigente'" >Turno:<br><h1 >{{paciente.turno}}</h1></li>
+        </ul>
+        <div v-show="!pacientes.length">
+            Ningun paciente por el momento
+        </div>    
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/0.12.15/vue.min.js"></script>
+        
+        <script type="text/javascript">
+            var socket = io();
+            
+          var appVue =  new Vue ({
+                el:'#chat',
+                data:{
+                    pacientes : [],
+                    paciente : '',
+                    nombre:'',
+                    peso : '',
+                    talla : '',
+                    presion : '',
+                    temperatura:'',
+                    turno:'',
+
+                },
+                ready: function(){
+                    socket.on('chat.paciente', function(paciente){
+                        this.pacientes.push(paciente);
+                    }.bind(this));
+                    socket.on('update.pacientes', function(pacientes){
+                        this.pacientes = pacientes;
+                    }.bind(this));
+                }
+            });
+            
+        </script>
+    </body>
+</html> 
